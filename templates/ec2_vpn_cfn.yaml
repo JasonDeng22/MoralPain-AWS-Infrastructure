@@ -1,0 +1,151 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  # creates 2 public 2 private subnets in vpc with 192.168.00/16 cidr block
+  # across just useast1 availability zone. it will also deploy igw with default route for public subnets
+  # and also deploy the ec2 instance with appropriate parameters
+Mappings:
+  RegionMap: 
+    us-east-1:
+      "AMI": "ami-0ed9277fb7eb570c9"
+
+Resources:
+  VPC: # vpc block
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: 'typedb-vpc-cfn'
+
+  InternetGateway: #igw block
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: igw-typedb-1
+
+  InternetGatewayAttachment: #attaches igw to vpc
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: 192.168.0.0/20
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cfn-public-subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "us-east-1b"
+      CidrBlock: 192.168.16.0/20
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: cfn-public-subnet-2
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "us-east-1a"
+      CidrBlock: 192.168.128.0/20
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: cfn-private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: "us-east-1b"
+      CidrBlock: 192.168.144.0/20
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value:  cfn-private-subnet-2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: cfn-route-table
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  cfnSecgroupPrivateEc2:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable TCP connections from public subnets
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 1729
+          ToPort: 1729
+          CidrIp: 192.168.16.0/20
+        - IpProtocol: tcp
+          FromPort: 1729
+          ToPort: 1729
+          CidrIp: 192.168.0.0/20	
+      VpcId: !Ref VPC
+    
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0f66f8dc899e75400 #custom ami with everything installed + systemctl setup
+      InstanceType: t2.micro
+      KeyName: "private_ec2_key"
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroupIds: 
+        - !Ref cfnSecgroupPrivateEc2
+      Tags:
+       - Key: Name
+         Value: cfn-typedb-server-ctl 
+
+  # EC2Instance:
+  #   Type: AWS::EC2::Instance
+  #   Properties:
+  #     ImageId: ami-08c40ec9ead489470 #ubuntu ami
+  #     InstanceType: t2.micro
+  #     KeyName: "private_ec2_key"
+  #     SubnetId: !Ref PrivateSubnet1
+  #     SecurityGroupIds: 
+  #       - !Ref cfnSecgroupPrivateEc2
+  #     Tags:
+  #      - Key: Name
+  #        Value: cfn-typedb-server-ctl 
+  #     UserData: |
+  #           #!/bin/bash
+  #           yum install httpd -y
+  #           service httpd start  

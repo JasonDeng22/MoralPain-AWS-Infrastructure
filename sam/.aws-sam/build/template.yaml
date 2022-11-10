@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'sam
+
+  Sample SAM Template for sam
+
+  '
+Globals:
+  Function:
+    Timeout: 20
+Resources:
+  TypeDBGetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: GetSubmissions
+      CodeUri: TypeDBGetFunction
+      Policies:
+      - AmazonVPCFullAccess
+      Handler: edu.uva.cs.moralpain.TypeDBGet::handleRequest
+      Runtime: java11
+      VpcConfig:
+        SecurityGroupIds:
+        - sg-08f6d413935987e0d
+        SubnetIds:
+        - subnet-0b2412118e0232a88
+        - subnet-08f40ed45c8c01e63
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          EC2_IP_ADDRESS: 192.168.142.121
+          DATABASE_NAME: test
+          JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /submissions
+            Method: get
+    Metadata:
+      SamResourceId: TypeDBGetFunction
+  TypeDBPostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: PostSubmissions
+      CodeUri: TypeDBPostFunction
+      Policies:
+      - AmazonVPCFullAccess
+      Handler: edu.uva.cs.moralpain.TypeDBPost::handleRequest
+      Runtime: java11
+      VpcConfig:
+        SecurityGroupIds:
+        - sg-08f6d413935987e0d
+        SubnetIds:
+        - subnet-0b2412118e0232a88
+        - subnet-08f40ed45c8c01e63
+      Architectures:
+      - x86_64
+      MemorySize: 512
+      Environment:
+        Variables:
+          EC2_IP_ADDRESS: 192.168.142.121
+          DATABASE_NAME: test
+          JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /submissions
+            Method: post
+    Metadata:
+      SamResourceId: TypeDBPostFunction
+Outputs:
+  TypeDBGetApi:
+    Description: API Gateway endpoint URL for Prod stage for TypeDB Get function
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/submissions/
+  TypeDBGetFunction:
+    Description: TypeDB Get Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - TypeDBGetFunction
+      - Arn
+  TypeDBGetFunctionIamRole:
+    Description: Implicit IAM Role created for TypeDB Get function
+    Value:
+      Fn::GetAtt:
+      - TypeDBGetFunctionRole
+      - Arn

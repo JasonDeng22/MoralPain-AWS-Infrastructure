@@ -1,0 +1,4 @@
+aws cloudformation create-stack --stack-name cfn-ec2-vpc-sg --template-body file://ec2_vpn_cfn.yaml
+aws cloudformation wait stack-create-complete --stack-name cfn-ec2-vpc-sg
+aws cloudformation update-stack --stack-name cfn-ec2-vpc-sg --template-body file://ec2_vpn_cfn.yaml   
+aws cloudformation delete-stack --stack-name cfn-ec2-vpc-sg

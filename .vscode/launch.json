@@ -1,0 +1,39 @@
+{
+    "configurations": [
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "sam:MoralPainFunctions (java11)",
+            "invokeTarget": {
+                "target": "template",
+                "templatePath": "${workspaceFolder}/sam/template.yaml",
+                "logicalId": "MoralPainFunctions"
+            },
+            "lambda": {
+                "payload": {},
+                "environmentVariables": {},
+                "runtime": "java11"
+            }
+        },
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "API sam:MoralPainFunctions (java11)",
+            "invokeTarget": {
+                "target": "api",
+                "templatePath": "${workspaceFolder}/sam/template.yaml",
+                "logicalId": "MoralPainFunctions"
+            },
+            "api": {
+                "path": "/submissions",
+                "httpMethod": "get",
+                "payload": {
+                    "json": {}
+                }
+            },
+            "lambda": {
+                "runtime": "java11"
+            }
+        }
+    ]
+}
