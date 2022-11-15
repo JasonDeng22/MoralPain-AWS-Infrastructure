@@ -8,6 +8,16 @@ Description: 'sam
 Globals:
   Function:
     Timeout: 20
+Parameters:
+  ec2IPAddress:
+    Type: String
+    Default: cfn-ec2-vpc-sg::EC2InstanceIP
+  privateSubnet1:
+    Type: String
+    Default: cfn-ec2-vpc-sg::PrivateSubnet1
+  privateSubnet2:
+    Type: String
+    Default: cfn-ec2-vpc-sg::PrivateSubnet2
 Resources:
   TypeDBGetFunction:
     Type: AWS::Serverless::Function
@@ -20,16 +30,17 @@ Resources:
       Runtime: java11
       VpcConfig:
         SecurityGroupIds:
-        - sg-08f6d413935987e0d
+        - Fn::ImportValue: cfn-ec2-vpc-sg-SGID1
         SubnetIds:
-        - subnet-0b2412118e0232a88
-        - subnet-08f40ed45c8c01e63
+        - Fn::ImportValue: cfn-ec2-vpc-sg-privatesubnet1
+        - Fn::ImportValue: cfn-ec2-vpc-sg-privatesubnet2
       Architectures:
       - x86_64
       MemorySize: 512
       Environment:
         Variables:
-          EC2_IP_ADDRESS: 192.168.142.121
+          EC2_IP_ADDRESS:
+            Fn::ImportValue: cfn-ec2-vpc-sg-ec2instanceip
           DATABASE_NAME: test
           JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
       Events:
@@ -51,16 +62,17 @@ Resources:
       Runtime: java11
       VpcConfig:
         SecurityGroupIds:
-        - sg-08f6d413935987e0d
+        - Fn::ImportValue: cfn-ec2-vpc-sg-SGID1
         SubnetIds:
-        - subnet-0b2412118e0232a88
-        - subnet-08f40ed45c8c01e63
+        - Fn::ImportValue: cfn-ec2-vpc-sg-privatesubnet1
+        - Fn::ImportValue: cfn-ec2-vpc-sg-privatesubnet2
       Architectures:
       - x86_64
       MemorySize: 512
       Environment:
         Variables:
-          EC2_IP_ADDRESS: 192.168.142.121
+          EC2_IP_ADDRESS:
+            Fn::ImportValue: cfn-ec2-vpc-sg-ec2instanceip
           DATABASE_NAME: test
           JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
       Events:

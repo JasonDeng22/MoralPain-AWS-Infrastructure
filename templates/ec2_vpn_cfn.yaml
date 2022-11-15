@@ -12,7 +12,7 @@ Resources:
   VPC: # vpc block
     Type: 'AWS::EC2::VPC'
     Properties:
-      CidrBlock: 192.168.0.0/16
+      CidrBlock: 128.168.0.0/16  # 128.168.0.0 - 128.168.255.255
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
@@ -37,7 +37,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: "us-east-1a"
-      CidrBlock: 192.168.0.0/20
+      CidrBlock: 128.168.0.0/18   # 128.168.63.255
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -48,7 +48,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: "us-east-1b"
-      CidrBlock: 192.168.16.0/20
+      CidrBlock: 128.168.64.0/18  # 128.168.127.255
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
@@ -59,7 +59,7 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: "us-east-1a"
-      CidrBlock: 192.168.128.0/20
+      CidrBlock: 128.168.128.0/18  # 128.168.191.255
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
@@ -70,11 +70,11 @@ Resources:
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: "us-east-1b"
-      CidrBlock: 192.168.144.0/20
+      CidrBlock: 128.168.192.0/18  # 128.168.255.255
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value:  cfn-private-subnet-2
+          Value: cfn-private-subnet-2
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
@@ -107,18 +107,26 @@ Resources:
   cfnSecgroupPrivateEc2:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Enable TCP connections from public subnets
+      GroupDescription: Enable TCP connections from private subnets
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 1729
           ToPort: 1729
-          CidrIp: 192.168.16.0/20
+          CidrIp: 128.168.128.0/18
         - IpProtocol: tcp
           FromPort: 1729
           ToPort: 1729
-          CidrIp: 192.168.0.0/20	
+          CidrIp: 128.168.192.0/18
       VpcId: !Ref VPC
-    
+
+  sgAllLambda:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable any connections
+      SecurityGroupIngress:
+        - IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      VpcId: !Ref VPC
 
   EC2Instance:
     Type: AWS::EC2::Instance
@@ -132,6 +140,54 @@ Resources:
       Tags:
        - Key: Name
          Value: cfn-typedb-server-ctl 
+
+# define outputs for VPC, subnets, and SGs
+Outputs:
+  StackVPC:
+    Description: The ID of the VPC
+    Value: !Ref VPC
+    Export:
+      Name: !Sub "${AWS::StackName}-VPCID"
+  StackSG1:
+    Description: The ID of the SG that only allows private
+    Value: !Ref cfnSecgroupPrivateEc2
+    Export:
+      Name: !Sub "${AWS::StackName}-SGID1"
+  StackSG2:
+    Description: The ID of the SG that allows all
+    Value: !Ref sgAllLambda
+    Export:
+      Name: !Sub "${AWS::StackName}-SGID2"
+  PrivateSubnet1:
+    Description: The ID of the first private subnet
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: !Sub "${AWS::StackName}-privatesubnet1"
+  PrivateSubnet2:
+    Description: The ID of the second private subnet
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: !Sub "${AWS::StackName}-privatesubnet2"
+  PublicSubnet1:
+    Description: The ID of the first public subnet
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: !Sub "${AWS::StackName}-publicsubnet1"
+  PublicSubnet2: 
+    Description: The ID of the second public subnet
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: !Sub "${AWS::StackName}-publicsubnet2"
+  EC2InstanceIP:
+    Description: The private IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2instanceip"
+  EC2InstanceDNS:
+    Description: The private DNS name of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateDnsName
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2instancedns"
 
   # EC2Instance:
   #   Type: AWS::EC2::Instance
