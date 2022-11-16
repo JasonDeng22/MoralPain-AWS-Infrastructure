@@ -13,13 +13,13 @@ Globals:
 Parameters: 
   ec2IPAddress: 
     Type: String
-    Default: cfn-ec2-vpc-sg::EC2InstanceIP
+    Default: cfn-ec2::EC2InstanceIP
   privateSubnet1: 
     Type: String
-    Default: cfn-ec2-vpc-sg::PrivateSubnet1
+    Default: cfn-vpc-sg::PrivateSubnet1
   privateSubnet2: 
     Type: String
-    Default: cfn-ec2-vpc-sg::PrivateSubnet2
+    Default: cfn-vpc-sg::PrivateSubnet2 
 
 Resources:
   TypeDBGetFunction:
@@ -33,22 +33,21 @@ Resources:
       Runtime: java11
       VpcConfig:
         # SecurityGroupIds:
-        #   Fn::ImportValue: !Ref securityGroup
+        #   - Fn::ImportValue: !Ref securityGroup
         # SubnetIds:
-        #   Fn::ImportValue:
-        #     - !Ref privateSubnet1
-        #     - !Ref privateSubnet2
+        #   - Fn::ImportValue: !Ref privateSubnet1
+        #   - Fn::ImportValue: !Ref privateSubnet2
         SecurityGroupIds:
-          - !ImportValue cfn-ec2-vpc-sg-SGID1
+          - !ImportValue cfn-vpc-sg-SGID1
         SubnetIds:
-          - !ImportValue cfn-ec2-vpc-sg-privatesubnet1
-          - !ImportValue cfn-ec2-vpc-sg-privatesubnet2
+          - !ImportValue cfn-vpc-sg-privatesubnet1
+          - !ImportValue cfn-vpc-sg-privatesubnet2
       Architectures:
         - x86_64
       MemorySize: 512
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          EC2_IP_ADDRESS: !ImportValue cfn-ec2-vpc-sg-ec2instanceip
+          EC2_IP_ADDRESS: !ImportValue cfn-ec2-ec2instanceip
           DATABASE_NAME: test
           JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1 # More info about tiered compilation https://aws.amazon.com/blogs/compute/optimizing-aws-lambda-function-performance-for-java/
       Events:
@@ -77,17 +76,16 @@ Resources:
         #   - Fn::ImportValue
         #     - !Ref privateSubnet2
         SecurityGroupIds:
-          # - !ImportValue cfn-ec2-vpc-sg-SGID2
-          - !ImportValue cfn-ec2-vpc-sg-SGID1
+          - !ImportValue cfn-vpc-sg-SGID1
         SubnetIds:
-          - !ImportValue cfn-ec2-vpc-sg-privatesubnet1
-          - !ImportValue cfn-ec2-vpc-sg-privatesubnet2
+          - !ImportValue cfn-vpc-sg-privatesubnet1
+          - !ImportValue cfn-vpc-sg-privatesubnet2
       Architectures:
         - x86_64
       MemorySize: 512
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
-          EC2_IP_ADDRESS: !ImportValue cfn-ec2-vpc-sg-ec2instanceip
+          EC2_IP_ADDRESS: !ImportValue cfn-ec2-ec2instanceip
           DATABASE_NAME: test
           JAVA_TOOL_OPTIONS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1 # More info about tiered compilation https://aws.amazon.com/blogs/compute/optimizing-aws-lambda-function-performance-for-java/
       Events:

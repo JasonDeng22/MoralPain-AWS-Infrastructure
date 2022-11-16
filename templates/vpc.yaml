@@ -2,11 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   # creates 2 public 2 private subnets in vpc with 128.168.00/16 cidr block
   # across just useast1 availability zone. it will also deploy igw with default route for public subnets
-  # and also deploy the ec2 instance with appropriate parameters
-Mappings:
-  RegionMap: 
-    us-east-1:
-      "AMI": "ami-0f66f8dc899e75400"
 
 Resources:
   VPC: # vpc block
@@ -128,20 +123,6 @@ Resources:
           CidrIp: 0.0.0.0/0
       VpcId: !Ref VPC
 
-  EC2Instance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: 
-       - Fn::FindInMap: [RegionMap, !Ref "AWS::Region", AMI] #custom ami with everything installed + systemctl setup
-      InstanceType: t2.micro
-      KeyName: "private_ec2_key"
-      SubnetId: !Ref PrivateSubnet1
-      SecurityGroupIds: 
-        - !Ref cfnSecgroupPrivateEc2
-      Tags:
-       - Key: Name
-         Value: cfn-typedb-server-ctl 
-
 # define outputs for VPC, subnets, and SGs
 Outputs:
   StackVPC:
@@ -179,16 +160,6 @@ Outputs:
     Value: !Ref PublicSubnet2
     Export:
       Name: !Sub "${AWS::StackName}-publicsubnet2"
-  EC2InstanceIP:
-    Description: The private IP of the EC2 instance
-    Value: !GetAtt EC2Instance.PrivateIp
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2instanceip"
-  EC2InstanceDNS:
-    Description: The private DNS name of the EC2 instance
-    Value: !GetAtt EC2Instance.PrivateDnsName
-    Export:
-      Name: !Sub "${AWS::StackName}-ec2instancedns"
 
   # EC2Instance:
   #   Type: AWS::EC2::Instance

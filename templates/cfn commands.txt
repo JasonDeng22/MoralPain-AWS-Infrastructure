@@ -9,3 +9,17 @@ https://www.practicalnetworking.net/wp-content/uploads/2019/11/ip-address-classe
 ^ cidr blocks
 
 https://dev.to/lambdasharp/dynamic-bindings-for-cloudformation-stacks-15l6
+
+
+
+aws cloudformation create-stack --stack-name cfn-vpc-sg --template-body file://vpc.yaml
+aws cloudformation wait stack-create-complete --stack-name cfn-vpc-sg
+aws cloudformation update-stack --stack-name cfn-vpc-sg --template-body file://vpc.yaml
+aws cloudformation delete-stack --stack-name cfn-vpc-sg
+
+aws cloudformation create-stack --stack-name cfn-ec2 --template-body file://ec2.yaml
+aws cloudformation wait stack-create-complete --stack-name cfn-ec2
+aws cloudformation update-stack --stack-name cfn-ec2 --template-body file://ec2.yaml
+aws cloudformation delete-stack --stack-name cfn-ec2
+
+can we use one stack with two different body template files, or do we need to have two different stacks (what we're using right now)

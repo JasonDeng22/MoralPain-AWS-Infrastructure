@@ -156,15 +156,17 @@ public class TypeDBGet implements RequestHandler<APIGatewayProxyRequestEvent, AP
                     System.out.println("reports: " + reports);
 
                 } catch (Exception e) { // autoclosable .close() throws "Exception", I think?
+                    context.getLogger().log("transaction error");
                     e.printStackTrace();
                     return response.withStatusCode(400).withBody(e.getMessage());
                 }
             } catch (Exception e) {
+                context.getLogger().log("session error");
                 e.printStackTrace();
                 return response.withStatusCode(400).withBody(e.getMessage());
             }
-
         } catch (Exception e) {
+            context.getLogger().log("client error");
             e.printStackTrace();
             return response.withStatusCode(400).withBody(e.getMessage());
         }

@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  # creates the private ec2 instance running TypeDB from custom AMI
+
+Mappings:
+  RegionMap: 
+    us-east-1:
+      "AMI": "ami-0f66f8dc899e75400" #custom ami with everything installed + systemctl setup
+
+Parameters: 
+  SecurityGroup:
+    Type: String
+    Default: cfn-vpc::StackSG1
+  privateSubnet1: 
+    Type: String
+    Default: cfn-vpc:PrivateSubnet1
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0f66f8dc899e75400
+      #  - Fn::FindInMap: [RegionMap, !Ref "AWS::Region", AMI] 
+      InstanceType: t2.micro
+      KeyName: "private_ec2_key"
+      SubnetId: !ImportValue cfn-vpc-sg-privatesubnet1
+        # - Fn::ImportValue: !Ref privateSubnet1  # expects a string but the type is a string???
+      SecurityGroupIds: 
+        - !ImportValue cfn-vpc-sg-SGID1
+      Tags:
+       - Key: Name
+         Value: cfn-typedb-server-ctl 
+
+# define outputs for VPC, subnets, and SGs
+Outputs:
+  EC2InstanceIP:
+    Description: The private IP of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateIp
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2instanceip"
+  EC2InstanceDNS:
+    Description: The private DNS name of the EC2 instance
+    Value: !GetAtt EC2Instance.PrivateDnsName
+    Export:
+      Name: !Sub "${AWS::StackName}-ec2instancedns"
+
+  # EC2Instance:
+  #   Type: AWS::EC2::Instance
+  #   Properties:
+  #     ImageId: ami-08c40ec9ead489470 #ubuntu ami
+  #     InstanceType: t2.micro
+  #     KeyName: "private_ec2_key"
+  #     SubnetId: !Ref PrivateSubnet1
+  #     SecurityGroupIds: 
+  #       - !Ref cfnSecgroupPrivateEc2
+  #     Tags:
+  #      - Key: Name
+  #        Value: cfn-typedb-server-ctl 
+  #     UserData: |
+  #           #!/bin/bash
+  #           yum install httpd -y
+  #           service httpd start  
