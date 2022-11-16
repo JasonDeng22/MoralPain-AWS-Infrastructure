@@ -67,35 +67,48 @@ public class TypeDBPost implements RequestHandler<APIGatewayProxyRequestEvent, A
             Long timestamp = (Long) jsonBodyObject.get("timestamp");
 
             String ip = String.format("%s:1729", variableManager.get("EC2_IP_ADDRESS"));
-            TypeDBClient client = TypeDB.coreClient(ip);
+            try (TypeDBClient client = TypeDB.coreClient(ip)) {
+                // open up a session
+                try (TypeDBSession session = client.session(variableManager.get("DATABASE_NAME"),
+                        TypeDBSession.Type.DATA)) {
+                    // write transaction
+                    try (TypeDBTransaction writeTransaction = session.transaction(TypeDBTransaction.Type.WRITE)) {
 
-            // open up a session
-            try (TypeDBSession session = client.session(variableManager.get("DATABASE_NAME"),
-                    TypeDBSession.Type.DATA)) {
-                // write transaction
-                try (TypeDBTransaction writeTransaction = session.transaction(TypeDBTransaction.Type.WRITE)) {
+                        // Insert a report using a WRITE transaction
+                        var report = var("r").isa("report").has("id", id).has("score", score).has("timestamp",
+                                timestamp);
 
-                    // Insert a report using a WRITE transaction
-                    var report = var("r").isa("report").has("id", id).has("score", score).has("timestamp",
-                            timestamp);
+                        // loop over the selections to iteratively add "has" statements to our insert
+                        // query
+                        for (String selection : selections) {
+                            report = report.has("selection", selection);
+                        }
 
-                    // loop over the selections to iteratively add "has" statements to our insert
-                    // query
-                    for (String selection : selections) {
-                        report = report.has("selection", selection);
+                        TypeQLInsert insertQuery = TypeQL.insert(report); // executes insert query
+
+                        List<Object> insertedId = writeTransaction.query().insert(insertQuery)
+                                .collect(Collectors.toList());
+                        System.out.println(
+                                "Inserted a report with ID: "
+                                        + ((ConceptMap) insertedId.get(0)).get("r").asThing().getIID());
+
+                        // to persist changes, a write transaction must always be committed (closed)
+                        writeTransaction.commit();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return response.withStatusCode(400).withBody(e.getMessage());
                     }
 
-                    TypeQLInsert insertQuery = TypeQL.insert(report); // executes insert query
-
-                    List<Object> insertedId = writeTransaction.query().insert(insertQuery).collect(Collectors.toList());
-                    System.out.println(
-                            "Inserted a report with ID: "
-                                    + ((ConceptMap) insertedId.get(0)).get("r").asThing().getIID());
-
-                    // to persist changes, a write transaction must always be committed (closed)
-                    writeTransaction.commit();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return response.withStatusCode(400).withBody(e.getMessage());
                 }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return response.withStatusCode(400).withBody(e.getMessage());
             }
+
             body = "";
             return response.withStatusCode(200).withBody(" OK");
         } catch (ParseException e) {

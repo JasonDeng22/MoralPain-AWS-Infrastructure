@@ -7,3 +7,5 @@ aws cloudformation delete-stack --stack-name cfn-ec2-vpc-sg
 https://www.practicalnetworking.net/wp-content/uploads/2019/11/ip-address-classes.png
 
 ^ cidr blocks
+
+https://dev.to/lambdasharp/dynamic-bindings-for-cloudformation-stacks-15l6
